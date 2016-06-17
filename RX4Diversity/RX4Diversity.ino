@@ -89,7 +89,7 @@ void setup_peripherals()
 
 	//WS2812/SK6812 LED Setup
 	FastLED.addLeds<WS2812B, WS2812_DATA, GRB>(leds, WS2812_COUNT);
-
+	FastLED.setBrightness(128);
 	//rx module init
 
 
@@ -117,43 +117,23 @@ void loop()
 		menu_State = 1;
 	}
 
-	status_dominant_rx();
 	button1 =  digitalRead(BTN_1);
 	button2 = digitalRead(BTN_1);
 
 	rx_sample_rssi();
 
-
-  // if(button1 == 0)
-  // {
-  // 	Serial.println("Button 1");
-  // }
-
-  // if(button2 == 0)
-  // {
-  // 	Serial.println("Button 2");
-  // }
-
- // leds[0] = CRGB::Red;
- //  FastLED.show();
- //  delay(500);
- //  // Now turn the LED off, then pause
- //  leds[0] = CRGB::Black;
- //  FastLED.show();
-
+	status_dominant_rx();
 
 	// picture loop
 	u8g.firstPage();  
 	do {
 		draw();
 	} while( u8g.nextPage() );
+	
+	FastLED.show();
 
-
-	Serial.println("loop: exit");
 	delay(100);
-
 }
-
 
 
 //------- Display Handling --------
@@ -424,18 +404,19 @@ void status_autoscan()
 
 void status_dominant_rx()
 {
-  // for(int i = 0; i < strip.numPixels(); i++) {
+	for(int i = 0; i < WS2812_COUNT; i++) {
 
-  // 	if(active_module-1 == i)
-  // 	{
-		// strip.setPixelColor(i, strip.Color(40,0,0));
-  // 	}
-  // 	else
-  // 	{
-		// strip.setPixelColor(i, strip.Color(0,0,0));
-  // 	}
+		if(active_module-1 == i)
+		{
+			leds[i] = CRGB::Red;
+		}
+		else
+		{
+			leds[i] = CRGB::Black; //.fadeToBlackBy(128);
+		}
 
-  // }
+	}
+
 }
 
 void status_low_battery()
