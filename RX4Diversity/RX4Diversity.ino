@@ -539,29 +539,19 @@ split codebase into files per topic
 button handling code checks
 
 LED handling code
+	remap leds to correct order on board
 	startup animation
 	channel indication led (in band colour)
 	band indication flash (in band colour)
-	fading between states
+	fading between states/hues
 	error animation
 	low battery animation
-	rssi visualisation mode
+	rssi visualisation mode (rainbow hues for each led)
 
-buzzer code
-	rssi sourd outputmode (make sound on change)
+Buzzer code
+	flesh out existing stubs with placeholders
+	rssi sound outputmode (make sound on change)
 	complex tone generation
-
-Battery Management
-	Check battery cell count
-	Estimate percentage full
-	adjustable trigger points
-	notification generation
-
-EEPROM
-	Save/recall functions
-	Channel and band settings
-	Store calibration data
-	store user settings
 
 Menu System
 	Home Screen
@@ -571,9 +561,15 @@ Menu System
 General functions
 	Calibration function
 	module selection logic
-	rssi read/processsing
 	button handling
 	non-blocking timers
 	timer based callbacks
 
+EEPROM
+	Save/recall functions
+	Channel and band settings
+	Store calibration data
+	store user settings
+
+Create startup tutorial
 */
