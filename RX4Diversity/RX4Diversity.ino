@@ -50,58 +50,53 @@ int active_module = 0;
 
 void setup_pins()
 {
-  sm_setup_pinMode();
+	sm_setup_pinMode();
+	rx_setup_pinMode();
 
-  pinMode(SPI_CLK, OUTPUT);
-  pinMode(SPI_CS, OUTPUT);
-  pinMode(SPI_DIO, OUTPUT);
+	pinMode(SPI_CLK, OUTPUT);
+	pinMode(SPI_CS, OUTPUT);
+	pinMode(SPI_DIO, OUTPUT);
 
-  rx_setup_pinMode();
-
-  pinMode(BTN_1, INPUT);
-  pinMode(BTN_2, INPUT);
-  pinMode(VOLTAGE_SENSE, INPUT);
-  pinMode(BUZZER, OUTPUT);
-
+	pinMode(BTN_1, INPUT);
+	pinMode(BTN_2, INPUT);
+	pinMode(VOLTAGE_SENSE, INPUT);
+	pinMode(BUZZER, OUTPUT);
 }
 
 void setup_peripherals()
 {
-  //i2c display init
-  // u8g.setRot180();	//flip if needed
+	//i2c display init
+	// u8g.setRot180();	//flip if needed
 
-  // assign default color value
-  if ( u8g.getMode() == U8G_MODE_R3G3B2 ) {
-    u8g.setColorIndex(255);     // white
-  }
-  else if ( u8g.getMode() == U8G_MODE_GRAY2BIT ) {
-    u8g.setColorIndex(3);         // max intensity
-  }
-  else if ( u8g.getMode() == U8G_MODE_BW ) {
-    u8g.setColorIndex(1);         // pixel on
-  }
-  else if ( u8g.getMode() == U8G_MODE_HICOLOR ) {
-    u8g.setHiColorByRGB(255,255,255);
-  }
+	// assign default color value
+	if ( u8g.getMode() == U8G_MODE_R3G3B2 ) {
+		u8g.setColorIndex(255);	// white
+	}
+	else if ( u8g.getMode() == U8G_MODE_GRAY2BIT ) {
+		u8g.setColorIndex(3);	// max intensity
+	}
+	else if ( u8g.getMode() == U8G_MODE_BW ) {
+		u8g.setColorIndex(1);	// pixel on
+	}
+	else if ( u8g.getMode() == U8G_MODE_HICOLOR ) {
+		u8g.setHiColorByRGB(255,255,255);
+	}
 
+	//WS2812/SK6812 LED Setup
+	FastLED.addLeds<WS2812B, WS2812_DATA, GRB>(leds, WS2812_COUNT);
 
-  //WS2812/SK6812 LED Setup
-  FastLED.addLeds<WS2812B, WS2812_DATA, GRB>(leds, WS2812_COUNT);
-
-  //rx module init
+	//rx module init
 
 
 }
 
 void setup() 
 {
-  Serial.begin(115200);
-  Serial.println("setup: entry");
-  
-  setup_pins();
-  setup_peripherals();
+	Serial.begin(115200);
+	Serial.println("setup: entry");
 
-  
+	setup_pins();
+	setup_peripherals();
 
 }
 
@@ -118,8 +113,8 @@ void loop()
 	}
 
 	status_dominant_rx();
-  button1 =  digitalRead(BTN_1);
-  button2 = digitalRead(BTN_1);
+	button1 =  digitalRead(BTN_1);
+	button2 = digitalRead(BTN_1);
 
   // if(button1 == 0)
   // {
@@ -139,15 +134,15 @@ void loop()
  //  FastLED.show();
 
 
-  // picture loop
-  u8g.firstPage();  
-  do {
-    draw();
-  } while( u8g.nextPage() );
+	// picture loop
+	u8g.firstPage();  
+	do {
+		draw();
+	} while( u8g.nextPage() );
 
 
-  Serial.println("loop: exit");
-  delay(100);
+	Serial.println("loop: exit");
+	delay(100);
 
 }
 
@@ -189,38 +184,38 @@ void ui_manager()
 
 void draw_splash()
 {
-  u8g.setFont(u8g_font_helvR10r);
-  u8g.drawStr( 12, 15, "ROTORMAGIC");
+	u8g.setFont(u8g_font_helvR10r);
+	u8g.drawStr( 12, 15, "ROTORMAGIC");
 
-  u8g.setFont(u8g_font_helvR08r);
-  u8g.drawStr( 8, 28, "4-Way Diversity RX 0.1");
-  //TODO - Take version number from define
+	u8g.setFont(u8g_font_helvR08r);
+	u8g.drawStr( 8, 28, "4-Way Diversity RX 0.1");
+	//TODO - Take version number from define
 }
 
 void draw_mainpage()
 {
-  u8g.setFont(u8g_font_helvR14r);
-  u8g.drawStr( 10, 15, "5470");
+	u8g.setFont(u8g_font_helvR14r);
+	u8g.drawStr( 10, 15, "5470");
 
-  u8g.setFont(u8g_font_helvR08r);
-  u8g.drawStr( 0, 28, "FatShark 01");
+	u8g.setFont(u8g_font_helvR08r);
+	u8g.drawStr( 0, 28, "FatShark 01");
 
 
 
-  u8g.drawStr( 80, 10, "VD");
-  char buf1[6];
-  sprintf (buf1, "%d", input_voltage);
-  u8g.drawStr( 98, 10, buf1);
+	u8g.drawStr( 80, 10, "VD");
+	char buf1[6];
+	sprintf (buf1, "%d", input_voltage);
+	u8g.drawStr( 98, 10, buf1);
 
-  u8g.drawStr( 80, 20, "B1");
-  char buf[2];
-  sprintf (buf, "%d", button1);
-  u8g.drawStr( 98, 20, buf);
+	u8g.drawStr( 80, 20, "B1");
+	char buf[2];
+	sprintf (buf, "%d", button1);
+	u8g.drawStr( 98, 20, buf);
 
-  u8g.drawStr( 80, 30, "B2");
-  char buf2[2];
-  sprintf (buf2, "%d", button2);
-  u8g.drawStr( 98, 30, buf2);
+	u8g.drawStr( 80, 30, "B2");
+	char buf2[2];
+	sprintf (buf2, "%d", button2);
+	u8g.drawStr( 98, 30, buf2);
 }
 
 
@@ -284,13 +279,6 @@ void rx_push_data()
 
 }
 
-
-
-
-
-
-
-
 void rx_decide_active()
 {
 
@@ -342,22 +330,22 @@ void alert_low_battery()
 
 void alert_low_signal()
 {
-  
+
 }
 
 void alert_rx_error()
 {
-  
+
 }
 
 void alert_channel_change()
 {
-  
+
 }
 
 void alert_band_change()
 {
-  
+
 }
 
 void alert_debug(String debugText)
@@ -388,7 +376,7 @@ void status_setup()
 
 void status_autoscan()
 {
-  
+
 }
 
 void status_dominant_rx()
@@ -414,19 +402,19 @@ void status_low_battery()
 
 void status_setting_save() 
 {
-  
+
 }
 
 //led solid for module led
 void status_channel_change()
 {
-  
+
 }
 
 //flash all leds with colour code for band
 void status_band_change()
 {
-  
+
 }
 
 
@@ -434,7 +422,7 @@ void status_band_change()
 
 void buzz_tone(int note, int duration)
 {
-    tone(BUZZER,note,duration); 
+	tone(BUZZER,note,duration); 
 
 }
 
