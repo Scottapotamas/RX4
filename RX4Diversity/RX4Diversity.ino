@@ -24,6 +24,10 @@
 // #define I2C_SDA A4  //PC4, 27
 // #define I2C_SCL A5  //PC5, 28
 
+#define BATTERY_MAX 4.2
+#define BATTERY_MIN 3.4
+#define BATTERY_WARN 3.7
+
 const int RX_RSSI_PIN[MODULE_COUNT] = {A2, A0, A3, A1};
 const int RX_SEL_PIN[MODULE_COUNT] = {6, 7, 8, 9};
 // #define RSSI1 A2  //PC2, 25
@@ -43,6 +47,7 @@ U8GLIB_SSD1306_128X32 u8g(U8G_I2C_OPT_NONE);	// I2C / TWI
 // Defines
 int button1, button2 = 0;
 float input_voltage = 0;
+int cell_count = 0;
 volatile int rx_rssi[MODULE_COUNT] = {0, 0, 0, 0};
 
 int menu_State = 0;
@@ -231,15 +236,46 @@ void measure_battery()
 
 void determine_cell_count()
 {
-	//how the fuck do we do this reliably
-	int cell_count = (input_voltage / batt_max_voltage) + 1;
+	//how the fuck do we do this reliably?
+	cell_count = (input_voltage / BATTERY_MAX) + 1;
+
+	if(cell_count > 6)
+	{
+		//TODO - handle over cell count detection or stupid user
+
+	}
+
+	if(cell_count < 2)
+	{
+		//TODO - handle 1S detected, or no valid reading
+
+	}
 }
 
 void calculate_battery_percentage()
 {
-	float batt_percentage = ((vbat - (vbatmincellvoltage * batteryCellCount)) * 100) / (vbatmaxcellvoltage - vbatmincellvoltage) * batteryCellCount);
-
+	float batt_percentage = ((input_voltage - (BATTERY_MIN * cell_count)) * 100) / ((BATTERY_MAX - BATTERY_MIN) * cell_count);
 }
+
+void check_battery_health()
+{
+	if(input_voltage < (BATTERY_WARN * cell_count))
+	{
+		//TODO - handle low battery alarm
+
+	}
+	else if(input_voltage < (BATTERY_MIN * cell_count))
+	{
+		//TODO - handle flat/urgent battery alarm
+
+	}
+	else 	
+	{
+		//battery is sufficiently full, should probably schedule the next check or something
+
+	}
+}
+
 //---------- RX Functions ----------
 void rx_setup_pinMode()
 {
