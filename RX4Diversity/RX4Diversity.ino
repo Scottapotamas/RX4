@@ -5,6 +5,7 @@
 // Settings and such
 #define VERSION_NUMBER 1.0
 #define RX_TYPE 1 //0 = RX5808, 1 = RX158
+#define MODULE_COUNT 4	//number of RX modules
 
 // Pinout mapping
 #define VOLTAGE_SENSE A6  //ADC6, 19
@@ -23,13 +24,12 @@
 // #define I2C_SDA A4  //PC4, 27
 // #define I2C_SCL A5  //PC5, 28
 
-#define RSSI1 A2  //PC2, 25
-#define RSSI2 A0  //PC0, 23
-#define RSSI3 A3  //PC3, 26
-#define RSSI4 A1  //PC1, 24
-
-#define MODULE_COUNT 4	//number of RX modules
-int RX_SEL_PIN[MODULE_COUNT] = {6, 7, 8, 9};
+const int RX_RSSI_PIN[MODULE_COUNT] = {A2, A0, A3, A1};
+const int RX_SEL_PIN[MODULE_COUNT] = {6, 7, 8, 9};
+// #define RSSI1 A2  //PC2, 25
+// #define RSSI2 A0  //PC0, 23
+// #define RSSI3 A3  //PC3, 26
+// #define RSSI4 A1  //PC1, 24
 //#define RXSEL1  6 //PD6, 10
 //#define RXSEL2  7 //PD7, 11
 //#define RXSEL3  8 //PB0, 12
@@ -40,11 +40,13 @@ int RX_SEL_PIN[MODULE_COUNT] = {6, 7, 8, 9};
 CRGB leds[WS2812_COUNT];
 U8GLIB_SSD1306_128X32 u8g(U8G_I2C_OPT_NONE);	// I2C / TWI 
 
-
-// Global Defines
-int rssi_module[] = {0, 0, 0, 0};
-int active_module = 0;
+// Defines
 int button1, button2 = 0;
+float input_voltage = 0;
+volatile int rx_rssi[MODULE_COUNT] = {0, 0, 0, 0};
+
+int menu_State = 0;
+int active_module = 0;
 
 void setup_pins()
 {
@@ -54,16 +56,12 @@ void setup_pins()
   pinMode(SPI_CS, OUTPUT);
   pinMode(SPI_DIO, OUTPUT);
 
-  pinMode(BUZZER, OUTPUT);
-
-  pinMode(RSSI1, INPUT);
-  pinMode(RSSI2, INPUT);
-  pinMode(RSSI3, INPUT);
-  pinMode(RSSI4, INPUT);
+  rx_setup_pinMode();
 
   pinMode(BTN_1, INPUT);
   pinMode(BTN_2, INPUT);
   pinMode(VOLTAGE_SENSE, INPUT);
+  pinMode(BUZZER, OUTPUT);
 
 }
 
@@ -71,6 +69,7 @@ void setup_peripherals()
 {
   //i2c display init
   // u8g.setRot180();	//flip if needed
+
   // assign default color value
   if ( u8g.getMode() == U8G_MODE_R3G3B2 ) {
     u8g.setColorIndex(255);     // white
@@ -102,12 +101,7 @@ void setup()
   setup_pins();
   setup_peripherals();
 
-  draw_init();		//content on screen ASAP
-  status_setup();	//cool startup animation
-
-
   
-  Serial.println("setup: exit");
 
 }
 
@@ -120,32 +114,29 @@ void loop()
 	else
 	{
 		sm_set_active(1);
+		menu_State = 1;
 	}
 
 	status_dominant_rx();
-  // button1 =  digitalRead(BTN_1);
-  // button2 = digitalRead(BTN_1);
+  button1 =  digitalRead(BTN_1);
+  button2 = digitalRead(BTN_1);
 
   // if(button1 == 0)
   // {
   // 	Serial.println("Button 1");
-  // 		sm_set_active(1);
-
   // }
 
   // if(button2 == 0)
   // {
   // 	Serial.println("Button 2");
-  // 		sm_set_active(2);
-
   // }
 
- leds[0] = CRGB::Red;
-  FastLED.show();
-  delay(500);
-  // Now turn the LED off, then pause
-  leds[0] = CRGB::Black;
-  FastLED.show();
+ // leds[0] = CRGB::Red;
+ //  FastLED.show();
+ //  delay(500);
+ //  // Now turn the LED off, then pause
+ //  leds[0] = CRGB::Black;
+ //  FastLED.show();
 
 
   // picture loop
@@ -478,7 +469,6 @@ split codebase into files per topic
 button handling code checks
 
 LED handling code
-	migrate to fastLED
 	startup animation
 	channel indication led (in band colour)
 	band indication flash (in band colour)
@@ -487,11 +477,9 @@ LED handling code
 	low battery animation
 	rssi visualisation mode
 
-
 buzzer code
 	rssi sourd outputmode (make sound on change)
 	complex tone generation
-
 
 Battery Management
 	Check battery cell count
@@ -506,7 +494,6 @@ EEPROM
 	store user settings
 
 Menu System
-	Boot screen
 	Home Screen
 	Settings Menu
 	Overlay alert screens
