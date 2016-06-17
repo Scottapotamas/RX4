@@ -123,7 +123,7 @@ void loop()
 
 	rx_sample_rssi();
 
-	
+
   // if(button1 == 0)
   // {
   // 	Serial.println("Button 1");
@@ -284,7 +284,7 @@ void rx_setup_pinMode()
 {
 	for(int i = 0; i < MODULE_COUNT; i++)
 	{
-		pinMode(RX_RSSI_PIN[i], OUTPUT);
+		pinMode(RX_RSSI_PIN[i], INPUT);
 	}
 }
 
