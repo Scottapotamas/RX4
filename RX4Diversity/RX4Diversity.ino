@@ -1,5 +1,5 @@
-#include <Adafruit_NeoPixel.h>
-#include <EEPROM.h>
+#include "FastLED.h"
+//#include <EEPROM.h>
 
 #include <SPI.h>
 #include <Wire.h>
@@ -13,17 +13,19 @@
 // Pinout mapping
 #define VOLTAGE_SENSE A6  //ADC6, 19
 #define BUZZER  3 //PD3, 01
-#define WS2812  5  //PB5, 17
 #define BTN_1 2 //PD2, 32
 #define BTN_2 4 //PD4, 02
+
+#define WS2812_DATA  5  //PB5, 17
+#define WS2812_COUNT 4	//led count might be different from rx count
 
 #define SPI_DIO 10  //PB2, 14
 #define SPI_CS  11  //PB3, 15
 #define SPI_CLK 12  //PB4, 1
-#define UART_RX 0 //PD0, 12
-#define UART_TX 1 //PD1, 31
-#define I2C_SDA A4  //PC4, 27
-#define I2C_SCL A5  //PC5, 28
+// #define UART_RX 0 //PD0, 12
+// #define UART_TX 1 //PD1, 31
+// #define I2C_SDA A4  //PC4, 27
+// #define I2C_SCL A5  //PC5, 28
 
 #define RSSI1 A2  //PC2, 25
 #define RSSI2 A0  //PC0, 23
@@ -39,7 +41,7 @@ int RX_SEL_PIN[MODULE_COUNT] = {6, 7, 8, 9};
 
 
 // Driver Object Definitions
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(4, WS2812, NEO_GRB + NEO_KHZ800);
+CRGB leds[WS2812_COUNT];
 Adafruit_SSD1306 display = Adafruit_SSD1306();
 
 
@@ -77,10 +79,8 @@ void setup_peripherals()
   display.clearDisplay();
 
   //WS2812/SK6812 LED Setup
-  strip.begin();
-  strip.clear();	//using clear() ensures we wipe any colour held over a reset
-  strip.show();
-    
+  FastLED.addLeds<WS2812B, WS2812_DATA, RGB>(leds, WS2812_COUNT);
+
   //rx module init
 
 
@@ -132,9 +132,16 @@ void loop()
 
   // }
 
+ leds[0] = CRGB::Red;
+  FastLED.show();
+  delay(500);
+  // Now turn the LED off, then pause
+  leds[0] = CRGB::Black;
+  FastLED.show();
+  delay(500);
+
   Serial.println("loop: exit");
 
-  strip.show();
   display.display();
 
   delay(400);
@@ -316,20 +323,20 @@ void alert_debug(String debugText)
 
 void status_setup()
 {
-	int col = 0;
+	// int col = 0;
 
-	for(int i = 0; i < 254; i++)
-	{
-		for(int j = 0; j < strip.numPixels(); j++) {
-	    	strip.setPixelColor(j, strip.Color(col,col,col));
-	    	col++;
-  		}
-  		strip.show();
-  		delay(10);
-	}
+	// for(int i = 0; i < 254; i++)
+	// {
+	// 	for(int j = 0; j < strip.numPixels(); j++) {
+	//     	strip.setPixelColor(j, strip.Color(col,col,col));
+	//     	col++;
+ //  		}
+ //  		strip.show();
+ //  		delay(10);
+	// }
 
-	strip.clear();
-	strip.show();
+	// strip.clear();
+	// strip.show();
 }
 
 void status_autoscan()
@@ -339,18 +346,18 @@ void status_autoscan()
 
 void status_dominant_rx()
 {
-  for(int i = 0; i < strip.numPixels(); i++) {
+  // for(int i = 0; i < strip.numPixels(); i++) {
 
-  	if(active_module-1 == i)
-  	{
-		strip.setPixelColor(i, strip.Color(40,0,0));
-  	}
-  	else
-  	{
-		strip.setPixelColor(i, strip.Color(0,0,0));
-  	}
+  // 	if(active_module-1 == i)
+  // 	{
+		// strip.setPixelColor(i, strip.Color(40,0,0));
+  // 	}
+  // 	else
+  // 	{
+		// strip.setPixelColor(i, strip.Color(0,0,0));
+  // 	}
 
-  }
+  // }
 }
 
 void status_low_battery()
