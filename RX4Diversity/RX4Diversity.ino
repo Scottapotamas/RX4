@@ -147,73 +147,112 @@ void loop()
 
 
   Serial.println("loop: exit");
-  delay(400);
+  delay(100);
 
 }
 
-void draw(void) {
-  // graphic commands to redraw the complete screen should be placed here  
-  u8g.setFont(u8g_font_unifont);
-  //u8g.setFont(u8g_font_osb21);
-  u8g.drawStr( 0, 22, "Hello World!");
-}
 
 
 //------- Display Handling --------
 
-void draw_init()
-{
-  // display.clearDisplay();
-  // display.setTextColor(WHITE);
+void draw(void) {
+  // graphic commands to redraw the complete screen should be placed here  
+  u8g.setFontPosTop();
+  u8g.setFont(u8g_font_unifont); 
 
-  // //title block
-  // display.setTextSize(2);
-  // display.setCursor(0,0);
-  // display.print("QUAD 5.8RX");
-  // display.setCursor(0,24);
-  // display.print("Ver 1.0-A");
- 
-
-  // //detected battery voltage
-  // display.setTextSize(2);
-  // display.setCursor(0,48);
-  // display.print("Batt: ");
-  
-  // display.print("?");
- 
-  // display.display();
+  ui_manager();
 }
+
+void ui_manager()
+{
+	switch(menu_State)
+	{
+		case 0:
+			draw_splash();
+
+		break;
+
+		case 1:
+			draw_mainpage();
+
+		break;
+
+		case 2:
+
+		break;
+
+		default:
+
+		break;
+	}
+} 
 
 void draw_splash()
 {
+  u8g.setFont(u8g_font_helvR10r);
+  u8g.drawStr( 12, 15, "ROTORMAGIC");
 
+  u8g.setFont(u8g_font_helvR08r);
+  u8g.drawStr( 8, 28, "4-Way Diversity RX 0.1");
+  //TODO - Take version number from define
 }
 
-void draw_update()
+void draw_mainpage()
 {
+  u8g.setFont(u8g_font_helvR14r);
+  u8g.drawStr( 10, 15, "5470");
 
+  u8g.setFont(u8g_font_helvR08r);
+  u8g.drawStr( 0, 28, "FatShark 01");
+
+
+
+  u8g.drawStr( 80, 10, "VD");
+  char buf1[6];
+  sprintf (buf1, "%d", input_voltage);
+  u8g.drawStr( 98, 10, buf1);
+
+  u8g.drawStr( 80, 20, "B1");
+  char buf[2];
+  sprintf (buf, "%d", button1);
+  u8g.drawStr( 98, 20, buf);
+
+  u8g.drawStr( 80, 30, "B2");
+  char buf2[2];
+  sprintf (buf2, "%d", button2);
+  u8g.drawStr( 98, 30, buf2);
 }
 
-void menu_manager()
-{
 
-} 
 
 //------- Battery Handling ---------
+void measure_battery()
+{
+	float adc_Voltage = (analogRead(VOLTAGE_SENSE) / 1024) * 5.0;
+	//adc reads 10bit, 0-5v range
+	//10k and 2k divider gives 4.67v max adc for 28V input = 0.167x
+	input_voltage = adc_Voltage / 0.167;
+}
 
 void determine_cell_count()
 {
-  //how the fuck do we do this reliably
-
-
+	//how the fuck do we do this reliably
+	int cell_count = (input_voltage / batt_max_voltage) + 1;
 }
 
-void measure_battery()
+void calculate_battery_percentage()
 {
-  
-}
+	float batt_percentage = ((vbat - (vbatmincellvoltage * batteryCellCount)) * 100) / (vbatmaxcellvoltage - vbatmincellvoltage) * batteryCellCount);
 
+}
 //---------- RX Functions ----------
+void rx_setup_pinMode()
+{
+	for(int i = 0; i < MODULE_COUNT; i++)
+	{
+		pinMode(RX_RSSI_PIN[i], OUTPUT);
+	}
+}
 
 void rx_init()
 {
