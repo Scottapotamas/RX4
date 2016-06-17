@@ -1,10 +1,6 @@
+#include "U8glib.h"
 #include "FastLED.h"
-//#include <EEPROM.h>
-
-#include <SPI.h>
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <EEPROM.h>
 
 // Settings and such
 #define VERSION_NUMBER 1.0
@@ -42,7 +38,7 @@ int RX_SEL_PIN[MODULE_COUNT] = {6, 7, 8, 9};
 
 // Driver Object Definitions
 CRGB leds[WS2812_COUNT];
-Adafruit_SSD1306 display = Adafruit_SSD1306();
+U8GLIB_SSD1306_128X32 u8g(U8G_I2C_OPT_NONE);	// I2C / TWI 
 
 
 // Global Defines
@@ -74,12 +70,24 @@ void setup_pins()
 void setup_peripherals()
 {
   //i2c display init
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
-  display.setTextColor(WHITE);
-  display.clearDisplay();
+  // u8g.setRot180();	//flip if needed
+  // assign default color value
+  if ( u8g.getMode() == U8G_MODE_R3G3B2 ) {
+    u8g.setColorIndex(255);     // white
+  }
+  else if ( u8g.getMode() == U8G_MODE_GRAY2BIT ) {
+    u8g.setColorIndex(3);         // max intensity
+  }
+  else if ( u8g.getMode() == U8G_MODE_BW ) {
+    u8g.setColorIndex(1);         // pixel on
+  }
+  else if ( u8g.getMode() == U8G_MODE_HICOLOR ) {
+    u8g.setHiColorByRGB(255,255,255);
+  }
+
 
   //WS2812/SK6812 LED Setup
-  FastLED.addLeds<WS2812B, WS2812_DATA, RGB>(leds, WS2812_COUNT);
+  FastLED.addLeds<WS2812B, WS2812_DATA, GRB>(leds, WS2812_COUNT);
 
   //rx module init
 
@@ -138,42 +146,51 @@ void loop()
   // Now turn the LED off, then pause
   leds[0] = CRGB::Black;
   FastLED.show();
-  delay(500);
+
+
+  // picture loop
+  u8g.firstPage();  
+  do {
+    draw();
+  } while( u8g.nextPage() );
+
 
   Serial.println("loop: exit");
-
-  display.display();
-
   delay(400);
 
 }
 
-
+void draw(void) {
+  // graphic commands to redraw the complete screen should be placed here  
+  u8g.setFont(u8g_font_unifont);
+  //u8g.setFont(u8g_font_osb21);
+  u8g.drawStr( 0, 22, "Hello World!");
+}
 
 
 //------- Display Handling --------
 
 void draw_init()
 {
-  display.clearDisplay();
-  display.setTextColor(WHITE);
+  // display.clearDisplay();
+  // display.setTextColor(WHITE);
 
-  //title block
-  display.setTextSize(2);
-  display.setCursor(0,0);
-  display.print("QUAD 5.8RX");
-  display.setCursor(0,24);
-  display.print("Ver 1.0-A");
+  // //title block
+  // display.setTextSize(2);
+  // display.setCursor(0,0);
+  // display.print("QUAD 5.8RX");
+  // display.setCursor(0,24);
+  // display.print("Ver 1.0-A");
  
 
-  //detected battery voltage
-  display.setTextSize(2);
-  display.setCursor(0,48);
-  display.print("Batt: ");
+  // //detected battery voltage
+  // display.setTextSize(2);
+  // display.setCursor(0,48);
+  // display.print("Batt: ");
   
-  display.print("?");
+  // display.print("?");
  
-  display.display();
+  // display.display();
 }
 
 void draw_splash()
