@@ -121,6 +121,9 @@ void loop()
 	button1 =  digitalRead(BTN_1);
 	button2 = digitalRead(BTN_1);
 
+	rx_sample_rssi();
+
+	
   // if(button1 == 0)
   // {
   // 	Serial.println("Button 1");
@@ -302,7 +305,11 @@ void rx_set_band()
 
 void rx_sample_rssi()
 {
-
+	for(int i = 0; i < MODULE_COUNT; i++)
+	{
+		rx_rssi[i] = analogRead(RX_RSSI_PIN[i]);
+		Serial.print("RSSI"); Serial.print(i); Serial.print(": "); Serial.println(rx_rssi[i]);
+	}
 }
 
 void rx_autoscan()
