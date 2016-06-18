@@ -366,7 +366,12 @@ void sm_set_active(int moduleRequested)
 
 void alert_low_battery() 
 {
+	buzz_battery_low();
+}
 
+void alert_critical_battery() 
+{
+	buzz_battery_critical();
 }
 
 void alert_low_signal()
@@ -381,18 +386,18 @@ void alert_rx_error()
 
 void alert_channel_change()
 {
-
+	buzz_freq_change();
 }
 
 void alert_band_change()
 {
-
+	buzz_band_change();
 }
 
 void alert_debug(String debugText)
 {
 	Serial.println(debugText);
-	buzz_tone(440,100);		//A4 100ms
+	buzz_alert();
 }
 
 //---------- LED Outputs ----------
