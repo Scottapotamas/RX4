@@ -249,32 +249,52 @@ void draw_splash()
 
 void draw_mainpage()
 {
+	char buf[10];
+
+	//selected frequency
+	sprintf(buf, "%d", pgm_read_word_near(channelFreqTable + (active_band*8 + active_freq)) );
 	u8g.setFont(u8g_font_helvR14r);
-	u8g.drawStr( 10, 15, "5470");
+	u8g.drawStr( 10, 15, buf);
 
+	//Human readable band/ch selected
 	u8g.setFont(u8g_font_helvR08r);
-	u8g.drawStr( 0, 28, "FatShark 01");
+	sprintf(buf, "%s %d", bandNameTable[active_band], active_freq+1);
+	u8g.drawStr( 0, 28, buf);
+
+	
+	//print battery stats
+	sprintf (buf, "%dS %02d%%", cell_count, batt_percentage);
+	u8g.drawStr( 85, 10, buf);
 
 
+	sprintf (buf, "%d %d", rx_rssi[2-1], rx_rssi[1-1]);
+	u8g.drawStr( 85, 20, buf);
 
-	u8g.drawStr( 80, 10, "VD");
-	char buf1[6];
-	sprintf (buf1, "%d", input_voltage);
-	u8g.drawStr( 98, 10, buf1);
+	sprintf (buf, "%d %d", rx_rssi[4-1], rx_rssi[3-1]);
+	u8g.drawStr( 85, 30, buf);
 
-	u8g.drawStr( 80, 20, "B1");
-	char buf[2];
-	sprintf (buf, "%d", button1);
-	u8g.drawStr( 98, 20, buf);
-
-	u8g.drawStr( 80, 30, "B2");
-	char buf2[2];
-	sprintf (buf2, "%d", button2);
-	u8g.drawStr( 98, 30, buf2);
+	//sprintf (buf, "%d %d", button1, button2);
+	//u8g.drawStr( 98, 30, buf);
 }
 
+void draw_settingslist()
+{
+	u8g.setFont(u8g_font_helvR10r);
+	u8g.drawStr( 12, 15, "Settings Menu");
 
+	u8g.setFont(u8g_font_helvR08r);
+	u8g.drawStr( 6, 28, "To be completed");
+}
 
+void draw_error()
+{
+	u8g.setFont(u8g_font_helvR10r);
+	u8g.drawStr( 12, 15, "MENU ERROR");
+
+	u8g.setFont(u8g_font_helvR08r);
+	u8g.drawStr( 6, 28, "Something went wrong :(");
+}
+}
 //------- Battery Handling ---------
 void measure_battery()
 {
@@ -340,14 +360,19 @@ void rx_init()
 
 }
 
-void rx_set_channel()
+void rx_set_freq(int freqNum)
 {
-
+	active_freq = constrain(freqNum, 0, 8);
 }
 
-void rx_set_band()
+void rx_set_band(int bandNum)
 {
+	active_band = constrain(bandNum, 0, 5);
+}
 
+int rx_calculate_channel() {
+	Serial.print("Calculated ch"); 	Serial.println(active_band*8 + active_freq);
+	return active_band*8 + active_freq;
 }
 
 void rx_sample_rssi()
