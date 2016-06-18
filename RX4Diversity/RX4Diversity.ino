@@ -67,6 +67,7 @@ void setup_pins()
 	pinMode(BTN_2, INPUT);
 	pinMode(VOLTAGE_SENSE, INPUT);
 	pinMode(BUZZER, OUTPUT);
+	pinMode(WS2812_DATA, OUTPUT);
 }
 
 void setup_peripherals()
@@ -89,9 +90,9 @@ void setup_peripherals()
 	}
 
 	//WS2812/SK6812 LED Setup
-	FastLED.addLeds<WS2812B, WS2812_DATA, GRB>(leds, WS2812_COUNT);
-	FastLED.setBrightness(0);
-	FastLED.show();
+	// FastLED.addLeds<WS2812B, WS2812_DATA, GRB>(leds, WS2812_COUNT);
+	// FastLED.setBrightness(0);
+	// FastLED.show();
 	//rx module init
 
 
@@ -104,10 +105,69 @@ void setup()
 
 	setup_pins();
 	setup_peripherals();
+	alert_startup();
+	sm_set_active(1);
 
 }
 
 void loop()
+{
+	button1 = digitalRead(BTN_1);
+	button2 = digitalRead(BTN_2);
+
+	rx_sample_rssi();
+
+	if(button1 == 0)
+	{
+		if(active_module >= MODULE_COUNT)
+		{
+			sm_set_active(1);
+		} 
+		else
+		{
+			sm_set_active(active_module+1);
+		}
+		delay(100);
+	}
+
+	if(button2 == 0)
+	{
+		Serial.print("Bt1:"); Serial.print(button1); Serial.print(" Bt2:");Serial.println(button2);
+		rx_set_freq(active_freq+1);
+
+		if(active_freq > 7)
+		{
+			rx_set_band(active_band+1);
+
+			if(active_band > 4)
+			{
+				active_band = 0;
+			}
+
+			active_freq = 0;
+		}
+
+		delay(100);
+		Serial.print("Band:"); Serial.print(active_band); Serial.print(" chSet:");Serial.println(active_freq);
+		setChannelModule(rx_calculate_channel());
+	}
+
+
+
+	measure_battery();
+
+
+	// picture loop
+	u8g.firstPage();  
+	do {
+		draw();
+	} while( u8g.nextPage() );
+	
+	// FastLED.setBrightness(0);
+	// FastLED.show();
+}
+
+void test_cycle()
 {
 	if(active_module < 4)
 	{
@@ -116,7 +176,6 @@ void loop()
 	else
 	{
 		sm_set_active(1);
-		menu_State = 1;
 	}
 
 	for(int i = 0; i < 40; i++)
@@ -134,27 +193,7 @@ void loop()
 	}
 
 	Serial.println("\n\n");
-
-
-	button1 =  digitalRead(BTN_1);
-	button2 = digitalRead(BTN_1);
-
-
-	status_dominant_rx();
-
-	// picture loop
-	u8g.firstPage();  
-	do {
-		draw();
-	} while( u8g.nextPage() );
-	
-	//FastLED.show();
-
-	delay(50);
-	menu_State = 1;
 }
-
-
 //------- Display Handling --------
 
 void draw(void) {
@@ -172,19 +211,28 @@ void ui_manager()
 		case 0:
 			draw_splash();
 
+			if(state_timeout > 100)
+			{
+				menu_State++;
+				state_timeout = 0;
+			}
+			else
+			{
+				state_timeout++;
+			}
+			
 		break;
 
 		case 1:
 			draw_mainpage();
-
 		break;
 
 		case 2:
-
+			draw_settingslist();
 		break;
 
 		default:
-
+			draw_error();
 		break;
 	}
 } 
