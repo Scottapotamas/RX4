@@ -48,11 +48,15 @@ U8GLIB_SSD1306_128X32 u8g(U8G_I2C_OPT_NONE);	// I2C / TWI
 // Defines
 int button1, button2 = 0;
 float input_voltage = 0;
-int cell_count = 0;
+int cell_count, batt_percentage = 0;
+
 volatile int rx_rssi[MODULE_COUNT] = {0, 0, 0, 0};
+int active_module = 0;
+int active_freq = 0;
+int active_band = 0;
 
 int menu_State = 0;
-int active_module = 0;
+int state_timeout = 0;
 
 void setup_pins()
 {
@@ -324,7 +328,7 @@ void determine_cell_count()
 
 void calculate_battery_percentage()
 {
-	float batt_percentage = ((input_voltage - (BATTERY_MIN * cell_count)) * 100) / ((BATTERY_MAX - BATTERY_MIN) * cell_count);
+	batt_percentage = ((input_voltage - (BATTERY_MIN * cell_count)) * 100) / ((BATTERY_MAX - BATTERY_MIN) * cell_count);
 }
 
 void check_battery_health()
@@ -436,6 +440,11 @@ void sm_set_active(int moduleRequested)
 }
 
 //------------- Alerts -------------
+void alert_startup()
+{
+	status_setup();
+	buzz_startup();
+}
 
 void alert_low_battery() 
 {
@@ -587,11 +596,11 @@ void buzz_battery_critical()
 
 void buzz_startup()
 {
-	buzz_tone(440, 80);
-	delay(50);
-	buzz_tone(860, 80);
-	delay(50);
-	buzz_tone(1280, 120);
+	buzz_tone(440, 100);
+	delay(150);
+	buzz_tone(860, 100);
+	delay(150);
+	buzz_tone(1280, 140);
 }
 
 //-------- Setting Save --------
@@ -626,7 +635,6 @@ void memory_push_settings()
 TODO
 
 split codebase into files per topic
-button handling code checks
 move pinout arrays into progmem
 
 LED handling code
@@ -640,12 +648,9 @@ LED handling code
 	rssi visualisation mode (rainbow hues for each led)
 
 Buzzer code
-	flesh out existing stubs with placeholders
-	rssi sound outputmode (make sound on change)
 	complex tone generation
 
 Menu System
-	Home Screen
 	Settings Menu
 	Overlay alert screens
 
