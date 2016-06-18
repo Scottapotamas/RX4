@@ -58,6 +58,40 @@ int active_band = 0;
 int menu_State = 0;
 int state_timeout = 0;
 
+// Channels to sent to the SPI registers
+const uint16_t channelTable[] PROGMEM = {
+  // Channel 1 - 8
+  0x2A05,    0x299B,    0x2991,    0x2987,    0x291D,    0x2913,    0x2909,    0x289F,    // Band A
+  0x2903,    0x290C,    0x2916,    0x291F,    0x2989,    0x2992,    0x299C,    0x2A05,    // Band B
+  0x2895,    0x288B,    0x2881,    0x2817,    0x2A0F,    0x2A19,    0x2A83,    0x2A8D,    // Band E
+  0x2906,    0x2910,    0x291A,    0x2984,    0x298E,    0x2998,    0x2A02,    0x2A0C,    // Band F / Airwave
+  0x281D,    0x288F,    0x2902,    0x2914,    0x2978,    0x2999,    0x2A0C,    0x2A1E     // Band C / Immersion Raceband
+};
+
+// Channels with their Mhz Values
+const uint16_t channelFreqTable[] PROGMEM = {
+  // Channel 1 - 8
+  5865, 5845, 5825, 5805, 5785, 5765, 5745, 5725, // Band A
+  5733, 5752, 5771, 5790, 5809, 5828, 5847, 5866, // Band B
+  5705, 5685, 5665, 5645, 5885, 5905, 5925, 5945, // Band E
+  5740, 5760, 5780, 5800, 5820, 5840, 5860, 5880, // Band F / Airwave
+  5658, 5695, 5732, 5769, 5806, 5843, 5880, 5917  // Band C / Immersion Raceband
+};
+
+const char* bandNameTable[] = {
+  "Boscam A", // Band A
+  "Boscam B", // Band B
+  "DJI / E", // Band E
+  "Immersion", // Band F / Airwave
+  "RaceBand", // Band C / Immersion Raceband
+};
+
+// All Channels of the above List ordered by Mhz
+const uint8_t channelList[] PROGMEM = {
+  19, 18, 32, 17, 33, 16, 7, 34, 8, 24, 6, 9, 25, 5, 35, 10, 26, 4, 11, 27, 3, 36, 12, 28, 2, 13, 29, 37, 1, 14, 30, 0, 15, 31, 38, 20, 21, 39, 22, 23
+};
+
+
 void setup_pins()
 {
 	sm_setup_pinMode();
@@ -153,7 +187,7 @@ void loop()
 
 		delay(100);
 		Serial.print("Band:"); Serial.print(active_band); Serial.print(" chSet:");Serial.println(active_freq);
-		setChannelModule(rx_calculate_channel());
+		rx_push_data(rx_calculate_channel());
 	}
 
 
@@ -184,7 +218,7 @@ void test_cycle()
 
 	for(int i = 0; i < 40; i++)
 	{
-		setChannelModule(i);
+		rx_push_data(i);
 		delay(500);
 		rx_sample_rssi();
 		Serial.print("Ch"); Serial.print(i);  
@@ -359,11 +393,6 @@ void rx_setup_pinMode()
 	}
 }
 
-void rx_init()
-{
-
-}
-
 void rx_set_freq(int freqNum)
 {
 	active_freq = constrain(freqNum, 0, 8);
@@ -387,16 +416,6 @@ void rx_sample_rssi()
 	}
 }
 
-void rx_autoscan()
-{
-
-}
-
-void rx_push_data()
-{
-
-}
-
 void rx_decide_active()
 {
 
@@ -405,6 +424,135 @@ void rx_decide_active()
 void rx_calibration()
 {
 
+}
+
+void rx_autoscan()
+{
+
+}
+
+void rx_push_data(uint8_t channel)
+{
+  uint8_t i;
+  uint16_t channelData;
+
+  channelData = pgm_read_word_near(channelTable + channel);
+
+  // bit bang  25 bits of data
+  // Order: A0-3, !R/W, D0-D19
+  // A0=0, A1=0, A2=0, A3=1, RW=0, D0-19=0
+  rx_enable_high();
+  delayMicroseconds(1);
+  //delay(2);
+  rx_enable_low();
+
+  rx_send_bit0();
+  rx_send_bit0();
+  rx_send_bit0();
+  rx_send_bit1();
+
+  rx_send_bit0();
+
+  // remaining zeros
+  for (i = 20; i > 0; i--)
+  {
+    rx_send_bit0();
+  }
+
+  // Clock the data in
+  rx_enable_high();
+  //delay(2);
+  delayMicroseconds(1);
+  rx_enable_low();
+
+  // Second is the channel data from the lookup table
+  // 20 bytes of register data are sent, but the MSB 4 bits are zeros
+  // register address = 0x1, write, data0-15=channelData data15-19=0x0
+  rx_enable_high();
+  rx_enable_low();
+
+  // Register 0x1
+  rx_send_bit1();
+  rx_send_bit0();
+  rx_send_bit0();
+  rx_send_bit0();
+
+  // Write to register
+  rx_send_bit1();
+
+  // D0-D15
+  //   note: loop runs backwards as more efficent on AVR
+  for (i = 16; i > 0; i--)
+  {
+    // Is bit high or low?
+    if (channelData & 0x1)
+    {
+      rx_send_bit1();
+    }
+    else
+    {
+      rx_send_bit0();
+    }
+
+    // Shift bits along to check the next one
+    channelData >>= 1;
+  }
+
+  // Remaining D16-D19
+  for (i = 4; i > 0; i--)
+  {
+    rx_send_bit0();
+  }
+  // Finished clocking data in
+  rx_enable_high();
+  delayMicroseconds(1);
+  //delay(2);
+
+  digitalWrite(SPI_CS, LOW);
+  digitalWrite(SPI_CLK, LOW);
+  digitalWrite(SPI_DIO, LOW);
+}
+
+void rx_send_bit1()
+{
+  digitalWrite(SPI_CLK, LOW);
+  delayMicroseconds(1);
+
+  digitalWrite(SPI_DIO, HIGH);
+  delayMicroseconds(1);
+  digitalWrite(SPI_CLK, HIGH);
+  delayMicroseconds(1);
+
+  digitalWrite(SPI_CLK, LOW);
+  delayMicroseconds(1);
+}
+
+void rx_send_bit0()
+{
+  digitalWrite(SPI_CLK, LOW);
+  delayMicroseconds(1);
+
+  digitalWrite(SPI_DIO, LOW);
+  delayMicroseconds(1);
+  digitalWrite(SPI_CLK, HIGH);
+  delayMicroseconds(1);
+
+  digitalWrite(SPI_CLK, LOW);
+  delayMicroseconds(1);
+}
+
+void rx_enable_high()
+{
+  delayMicroseconds(1);
+  digitalWrite(SPI_CS, HIGH);
+  delayMicroseconds(1);
+}
+
+void rx_enable_low()
+{
+  delayMicroseconds(1);
+  digitalWrite(SPI_CS, LOW);
+  delayMicroseconds(1);
 }
 
 //------- Switching Matrix --------
