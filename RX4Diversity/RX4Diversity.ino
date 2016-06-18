@@ -1,24 +1,25 @@
-#include "U8glib.h"
-#include "FastLED.h"
-#include <EEPROM.h>
+#include "U8glib.h"			//display driver and graphics
+#include "FastLED.h"		//WS2812/SK6812 driver
+#include <avr/pgmspace.h>	//pull values out of flash (LUTs etc)
+#include <EEPROM.h>			//settings storage
 
 // Settings and such
 #define VERSION_NUMBER 1.0
-#define RX_TYPE 1 //0 = RX5808, 1 = RX158
-#define MODULE_COUNT 4	//number of RX modules
+#define RX_TYPE 1			//0 = RX5808, 1 = RX158
+#define MODULE_COUNT 4		//number of RX modules
 
 // Pinout mapping
-#define VOLTAGE_SENSE A6  //ADC6, 19
-#define BUZZER  3 //PD3, 01
-#define BTN_1 2 //PD2, 32
-#define BTN_2 4 //PD4, 02
+#define VOLTAGE_SENSE A6	//ADC6, 19
+#define BUZZER 3			//PD3, 01
+#define BTN_1 2				//PD2, 32
+#define BTN_2 4				//PD4, 02
 
-#define WS2812_DATA  5  //PB5, 17
-#define WS2812_COUNT 4	//led count might be different from rx count
+#define WS2812_DATA  5		//PB5, 17
+#define WS2812_COUNT 4		//led count might be different from rx count
 
-#define SPI_DIO 10  //PB2, 14
-#define SPI_CS  11  //PB3, 15
-#define SPI_CLK 12  //PB4, 1
+#define SPI_DIO 10			//PB2, 14
+#define SPI_CS  11			//PB3, 15
+#define SPI_CLK 12			//PB4, 1
 // #define UART_RX 0 //PD0, 12
 // #define UART_TX 1 //PD1, 31
 // #define I2C_SDA A4  //PC4, 27
@@ -89,7 +90,8 @@ void setup_peripherals()
 
 	//WS2812/SK6812 LED Setup
 	FastLED.addLeds<WS2812B, WS2812_DATA, GRB>(leds, WS2812_COUNT);
-	FastLED.setBrightness(128);
+	FastLED.setBrightness(0);
+	FastLED.show();
 	//rx module init
 
 
@@ -117,10 +119,26 @@ void loop()
 		menu_State = 1;
 	}
 
+	for(int i = 0; i < 40; i++)
+	{
+		setChannelModule(i);
+		delay(300);
+		rx_sample_rssi();
+		Serial.print("Ch"); Serial.print(i);  
+
+		for(int j = 0; j < MODULE_COUNT; j++)
+		{
+			Serial.print(", "); Serial.print(rx_rssi[j]);	
+		}
+		Serial.println("");
+	}
+
+	Serial.println("\n\n");
+
+
 	button1 =  digitalRead(BTN_1);
 	button2 = digitalRead(BTN_1);
 
-	rx_sample_rssi();
 
 	status_dominant_rx();
 
@@ -130,9 +148,10 @@ void loop()
 		draw();
 	} while( u8g.nextPage() );
 	
-	FastLED.show();
+	//FastLED.show();
 
-	delay(100);
+	delay(50);
+	menu_State = 1;
 }
 
 
@@ -288,7 +307,6 @@ void rx_sample_rssi()
 	for(int i = 0; i < MODULE_COUNT; i++)
 	{
 		rx_rssi[i] = analogRead(RX_RSSI_PIN[i]);
-		Serial.print("RSSI"); Serial.print(i); Serial.print(": "); Serial.println(rx_rssi[i]);
 	}
 }
 
@@ -518,6 +536,7 @@ TODO
 
 split codebase into files per topic
 button handling code checks
+move pinout arrays into progmem
 
 LED handling code
 	remap leds to correct order on board
