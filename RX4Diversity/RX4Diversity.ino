@@ -122,7 +122,7 @@ void loop()
 	for(int i = 0; i < 40; i++)
 	{
 		setChannelModule(i);
-		delay(300);
+		delay(500);
 		rx_sample_rssi();
 		Serial.print("Ch"); Serial.print(i);  
 
@@ -465,42 +465,55 @@ void status_band_change()
 void buzz_tone(int note, int duration)
 {
 	tone(BUZZER,note,duration); 
-
 }
 
 void buzz_alert()
 {
-
+	buzz_tone(280, 40);
+	delay(40);
+	buzz_tone(280, 40);
 }
 
 void buzz_band_change()
 {
+	buzz_tone(650, 40);
 
 }
 
 void buzz_freq_change()
 {
+	buzz_tone(440, 80);
 
 }
 
 void buzz_module_change()
 {
-	
+	buzz_tone(1250, 15);
 }
 
 void buzz_battery_low()
 {
-
+	buzz_tone(200, 50);
+	delay(40);
+	buzz_tone(350, 50);
 }
 
 void buzz_battery_critical()
 {
-
+	buzz_tone(350, 50);
+	delay(40);
+	buzz_tone(350, 50);
+	delay(40);
+	buzz_tone(350, 50);
 }
 
 void buzz_startup()
 {
-
+	buzz_tone(440, 80);
+	delay(50);
+	buzz_tone(860, 80);
+	delay(50);
+	buzz_tone(1280, 120);
 }
 
 //-------- Setting Save --------
